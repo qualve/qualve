@@ -11,6 +11,9 @@ const PNG_BYTES = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 const image = () => LLMFile.get({ filename: "logo.png", contents: PNG_BYTES });
 const svg = () => LLMFile.get({ filename: "icon.svg", contents: "<svg></svg>" });
 const data = () => LLMFile.get({ filename: "answers.json", contents: { a: 1 } });
+// Unregistered binary type: reads as a Buffer but has no binary Format, so it
+// is (correctly) not media — the data path must reject it rather than JSON-dump it.
+const unknownBinary = () => LLMFile.get({ filename: "photo.bmp", contents: PNG_BYTES });
 
 export default {
 	name: "LLMFile media handling",
@@ -92,6 +95,26 @@ export default {
 					name: "Returns raw text for SVG",
 					run: () => svg().toString(),
 					expect: "<svg></svg>",
+				},
+			],
+		},
+		{
+			name: "unrecognized binary is rejected, not JSON-dumped",
+			tests: [
+				{
+					name: "Unregistered binary type is not classified as media",
+					run: () => unknownBinary().isMedia,
+					expect: false,
+				},
+				{
+					name: "toBlob throws a clear error instead of serializing bytes to JSON",
+					run: () => unknownBinary().toBlob(),
+					throws: /binary file type that is not a supported input/,
+				},
+				{
+					name: "toString throws the same clear error",
+					run: () => unknownBinary().toString(),
+					throws: /binary file type that is not a supported input/,
 				},
 			],
 		},

@@ -266,6 +266,19 @@ export default class LLMTask extends Task {
 
 		const capabilities = this.capabilities;
 
+		// Fail fast on media (images) for providers that can't ingest it, rather than
+		// letting it reach the API as a mis-typed block or a text-serialized dump.
+		if (this.input?.length > 0 && !capabilities.imageInput) {
+			let media = this.input.find(f => f.isMedia);
+			if (media) {
+				throw new Error(
+					`${this.name} does not support image input (${media.filename}). ` +
+						`Image input is currently only available with the Gemini provider — run with \`--llm=gemini\`, ` +
+						`or remove the image from this task's inputs.`,
+				);
+			}
+		}
+
 		if (
 			this.input?.length > 0 &&
 			!capabilities.inputSchema &&

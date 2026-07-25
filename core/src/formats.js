@@ -30,6 +30,8 @@ export const png = new BinaryFormat({ extension: "png", mimeType: "image/png" })
 export const jpeg = new BinaryFormat({ extensions: ["jpg", "jpeg"], mimeType: "image/jpeg" });
 export const gif = new BinaryFormat({ extension: "gif", mimeType: "image/gif" });
 export const webp = new BinaryFormat({ extension: "webp", mimeType: "image/webp" });
+export const heic = new BinaryFormat({ extension: "heic", mimeType: "image/heic" });
+export const heif = new BinaryFormat({ extension: "heif", mimeType: "image/heif" });
 
 /**
  * SVG. Technically an image, but XML text: registered as a text format so it is

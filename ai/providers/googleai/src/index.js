@@ -11,6 +11,7 @@ export default class Gemini extends LLMTask {
 	static capabilities = {
 		outputSchema: true,
 		thinkingLevel: true,
+		imageInput: true,
 	};
 
 	get capabilities () {

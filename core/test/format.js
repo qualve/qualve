@@ -193,6 +193,13 @@ export default {
 					expect: png,
 				},
 				{
+					name: "heic and heif are registered as binary image formats",
+					run: () =>
+						Format.byExtension("heic")?.binary === true &&
+						Format.byExtension("heif")?.mimeType === "image/heif",
+					expect: true,
+				},
+				{
 					name: "svg is a text format (not binary)",
 					run: () => svg.binary,
 					expect: false,

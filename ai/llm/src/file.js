@@ -59,6 +59,22 @@ export default class LLMFile extends File {
 		return typeof this.contents === "string" ? "text/plain" : this.mimeType;
 	}
 
+	/**
+	 * Guard the data (non-media) path against binary bytes. An unregistered binary
+	 * type (e.g. `.bmp`, `.heic` with no Format) reads as a Buffer but has
+	 * `format.binary === undefined`, so it isn't classified as media — without this
+	 * check it would be silently JSON-serialized into a `{"type":"Buffer",…}` dump.
+	 * Fail loud with actionable guidance instead.
+	 */
+	#assertNotRawBytes (contents) {
+		if (Buffer.isBuffer(contents)) {
+			throw new Error(
+				`Cannot upload ${this.path}: \`.${this.extension}\` is a binary file type that is not a supported input. ` +
+					`Supported image inputs are png, jpeg, gif, webp, heic, heif (svg is uploaded as text).`,
+			);
+		}
+	}
+
 	/** Serialize contents for LLM upload using the upload format. */
 	toString () {
 		let contents = this.contents;
@@ -70,6 +86,7 @@ export default class LLMFile extends File {
 			// Defer to the base File, which throws a clear error for binary formats.
 			return super.toString();
 		}
+		this.#assertNotRawBytes(contents);
 		return this.uploadFormat.serialize(contents);
 	}
 
@@ -87,6 +104,7 @@ export default class LLMFile extends File {
 			// Already text (e.g. SVG, plain text): upload verbatim, not JSON-wrapped.
 			return new Blob([contents], { type: this.uploadMimeType });
 		}
+		this.#assertNotRawBytes(contents);
 		let f = this.uploadFormat;
 		return new Blob([f.serialize(contents)], { type: f.mimeType });
 	}
