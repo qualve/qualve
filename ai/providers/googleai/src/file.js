@@ -31,7 +31,9 @@ export default class GeminiFile extends LLMFile {
 			config: {
 				name: this.remoteFilename,
 				displayName: this.displayName,
-				mimeType: this.mimeType,
+				// Declare the upload type (image/* for media, text/plain for SVG/text),
+				// not the raw file MIME, so Gemini accepts and interprets it correctly.
+				mimeType: this.uploadMimeType,
 			},
 		});
 	}

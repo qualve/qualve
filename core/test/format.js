@@ -1,4 +1,4 @@
-import Format, { TextFormat, BinaryFormat, json } from "../src/formats.js";
+import Format, { TextFormat, BinaryFormat, json, png, jpeg, svg } from "../src/formats.js";
 
 // Stub text format using instance class fields (registered on first lookup)
 class StubTextFormat extends TextFormat {
@@ -77,7 +77,10 @@ export default {
 				},
 				{
 					name: "Format.all returns registered instances",
-					run: () => Format.all.has(json) && Format.all.has(stubText) && !Format.all.has(unregistered),
+					run: () =>
+						Format.all.has(json) &&
+						Format.all.has(stubText) &&
+						!Format.all.has(unregistered),
 					expect: true,
 				},
 			],
@@ -153,8 +156,51 @@ export default {
 				{
 					name: "Binary format serializes to Buffer",
 					run: () =>
-						stubBinary.serialize({ rest: "hi" }).equals(Buffer.from([0xaa, 0x68, 0x69])),
+						stubBinary
+							.serialize({ rest: "hi" })
+							.equals(Buffer.from([0xaa, 0x68, 0x69])),
 					expect: true,
+				},
+			],
+		},
+		{
+			name: "image formats",
+			tests: [
+				{
+					name: "png registered by extension",
+					run: () => Format.byExtension("png"),
+					expect: png,
+				},
+				{
+					name: "png has image/png MIME type",
+					run: () => png.mimeType,
+					expect: "image/png",
+				},
+				{
+					name: "png is binary",
+					run: () => png.binary,
+					expect: true,
+				},
+				{
+					name: "jpg and jpeg both resolve to the jpeg format",
+					run: () =>
+						Format.byExtension("jpg") === jpeg && Format.byExtension("jpeg") === jpeg,
+					expect: true,
+				},
+				{
+					name: "png resolves by MIME type",
+					run: () => Format.byMimeType("image/png"),
+					expect: png,
+				},
+				{
+					name: "svg is a text format (not binary)",
+					run: () => svg.binary,
+					expect: false,
+				},
+				{
+					name: "svg carries the image/svg+xml MIME type",
+					run: () => svg.mimeType,
+					expect: "image/svg+xml",
 				},
 			],
 		},

@@ -7,6 +7,16 @@ import path from "node:path";
  * @returns {string}
  */
 export function inputFile (file) {
+	let filename = path.basename(file.filePath);
+
+	// Media (images, etc.) is sent as a native content part, not serialized data —
+	// so the JSON-schema language below never applies. Just name it (and its
+	// description, if any), letting the model correlate the part with the filename.
+	if (file.isMedia) {
+		let desc = file.description ? ` containing ${file.description}` : "";
+		return `\`${filename}\`${desc}.`;
+	}
+
 	let ret = [];
 
 	if (file.description && !this.capabilities.inputDescriptions) {
@@ -19,11 +29,16 @@ export function inputFile (file) {
 
 	ret = ret.join(" and ");
 
+	if (!ret) {
+		// No description or schema to add — just name the file.
+		return `\`${filename}\`.`;
+	}
+
 	if (!ret.startsWith("containing")) {
 		ret = "which " + ret;
 	}
 
-	ret = `\`${path.basename(file.filePath)}\` ${ret}.`;
+	ret = `\`${filename}\` ${ret}.`;
 
 	if (file.schema) {
 		ret += "\nRead the field descriptions in the JSON schema for details on each field.";
