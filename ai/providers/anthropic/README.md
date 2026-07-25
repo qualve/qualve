@@ -36,17 +36,18 @@ export default {
 
 ## Models
 
-| Model | Context window | Max output |
-| --- | --- | --- |
-| `claude-opus-4-8` (default) | 1M | 128K |
-| `claude-sonnet-4-6` | 1M | 64K |
-| `claude-haiku-4-5` | 200K | 64K |
+| Model                       | Context window | Max output |
+| --------------------------- | -------------- | ---------- |
+| `claude-opus-4-8` (default) | 1M             | 128K       |
+| `claude-sonnet-4-6`         | 1M             | 64K        |
+| `claude-haiku-4-5`          | 200K           | 64K        |
 
 ## Capabilities
 
-| Capability | Supported |
-| --- | --- |
-| Structured output (JSON schema) | Yes |
-| Input file descriptions in prompt | Yes (automatic) |
-| Thinking levels | No |
-| Token counting | Yes |
+| Capability                        | Supported                                         |
+| --------------------------------- | ------------------------------------------------- |
+| Structured output (JSON schema)   | Yes                                               |
+| Input file descriptions in prompt | Yes (automatic)                                   |
+| Thinking levels                   | No                                                |
+| Token counting                    | Yes                                               |
+| Image input                       | Yes (`png`, `jpeg`, `gif`, `webp`; `svg` as text) |

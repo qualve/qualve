@@ -10,6 +10,7 @@ export default class OpenAI extends LLMTask {
 	static capabilities = {
 		outputSchema: true,
 		thinkingLevel: true,
+		imageInput: true,
 	};
 
 	client = new OpenAIClient({
@@ -81,16 +82,13 @@ export default class OpenAI extends LLMTask {
 					role: "user",
 					// Stable reference input first, then prompt, then the per-call payload, so the
 					// shared prefix (e.g. the codebook) stays cacheable across calls. See LLMTask#promptContent.
-					// Uploaded files are sent as direct input_file blocks, giving the model complete access
-					// to file contents (unlike file_search which returns chunks).
+					// Uploaded files are sent as direct input_file/input_image blocks, giving the model
+					// complete access to file contents (unlike file_search which returns chunks).
 					// NOTE: setting `prompt_cache_key` here would improve cross-question cache-hit routing (#12).
 					content: this.promptContent.flatMap(seg =>
 						seg.text !== undefined
 							? [{ type: "input_text", text: seg.text }]
-							: [
-									{ type: "input_text", text: seg.file.describe() },
-									{ type: "input_file", file_id: seg.file.remoteFile.id },
-								]),
+							: seg.file.toContentPart()),
 				},
 			],
 			text: {
