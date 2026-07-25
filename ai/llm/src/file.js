@@ -34,19 +34,79 @@ export default class LLMFile extends File {
 		return compactJson;
 	}
 
+	/**
+	 * Whether this file is binary media (an image, etc.) that must be uploaded
+	 * as-is under its own MIME type rather than text-serialized via {@link uploadFormat}.
+	 * Keyed off the format's `binary` flag, so SVG — a text format despite being an
+	 * image — is (correctly) not treated as media and goes through the text path.
+	 */
+	get isMedia () {
+		return this.format.binary === true;
+	}
+
+	/**
+	 * MIME type to declare when uploading to a provider.
+	 * - Media (images): its real type (e.g. `image/png`), so the provider treats it as an image.
+	 * - Already-text content (e.g. SVG, plain text): `text/plain`, so it's uploaded as text
+	 *   rather than under an image type a provider's file API may reject (`image/svg+xml`).
+	 * - Everything else (structured data): unchanged from {@link File#mimeType}, preserving
+	 *   existing behavior for JSON/CSV/etc.
+	 */
+	get uploadMimeType () {
+		if (this.isMedia) {
+			return this.mimeType;
+		}
+		return typeof this.contents === "string" ? "text/plain" : this.mimeType;
+	}
+
+	/**
+	 * Guard the data (non-media) path against binary bytes. An unregistered binary
+	 * type (e.g. `.bmp`, `.heic` with no Format) reads as a Buffer but has
+	 * `format.binary === undefined`, so it isn't classified as media — without this
+	 * check it would be silently JSON-serialized into a `{"type":"Buffer",…}` dump.
+	 * Fail loud with actionable guidance instead.
+	 */
+	#assertNotRawBytes (contents) {
+		if (Buffer.isBuffer(contents)) {
+			throw new Error(
+				`Cannot upload ${this.path}: \`.${this.extension}\` is a binary file type that is not a supported input. ` +
+					`Supported image inputs are png, jpeg, gif, webp, heic, heif (svg is uploaded as text).`,
+			);
+		}
+	}
+
 	/** Serialize contents for LLM upload using the upload format. */
 	toString () {
 		let contents = this.contents;
 		if (typeof contents === "string") {
 			return contents;
 		}
+		if (this.isMedia) {
+			// Binary media has no text serialization — callers must use toBlob().
+			// Defer to the base File, which throws a clear error for binary formats.
+			return super.toString();
+		}
+		this.#assertNotRawBytes(contents);
 		return this.uploadFormat.serialize(contents);
 	}
 
-	/** Wrap contents in a Blob using the upload format. */
+	/**
+	 * Wrap contents in a Blob for upload. Media (binary) files pass their bytes
+	 * through untouched under their real MIME type; everything else is serialized
+	 * with the upload format.
+	 */
 	toBlob () {
+		if (this.isMedia) {
+			return new Blob([this.contents], { type: this.mimeType });
+		}
+		let contents = this.contents;
+		if (typeof contents === "string") {
+			// Already text (e.g. SVG, plain text): upload verbatim, not JSON-wrapped.
+			return new Blob([contents], { type: this.uploadMimeType });
+		}
+		this.#assertNotRawBytes(contents);
 		let f = this.uploadFormat;
-		return new Blob([f.serialize(this.contents)], { type: f.mimeType });
+		return new Blob([f.serialize(contents)], { type: f.mimeType });
 	}
 
 	#remoteFilename;
@@ -74,7 +134,12 @@ export default class LLMFile extends File {
 			}
 
 			let stem = this.path.split(path.sep).join("-");
-			let hash = createHash("sha256").update(this.toString()).digest("hex").slice(0, 12);
+			// Hash the raw bytes for media (which has no text serialization), the
+			// serialized text otherwise. Either way, identity follows content.
+			let hash = createHash("sha256")
+				.update(this.isMedia ? this.contents : this.toString())
+				.digest("hex")
+				.slice(0, 12);
 			this.#remoteFilename = addFilenameSuffix(stem, `-${hash}`);
 		}
 

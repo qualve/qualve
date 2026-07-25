@@ -11,6 +11,7 @@ export default class Gemini extends LLMTask {
 	static capabilities = {
 		outputSchema: true,
 		thinkingLevel: true,
+		imageInput: true,
 	};
 
 	get capabilities () {
@@ -37,7 +38,14 @@ export default class Gemini extends LLMTask {
 				// FIXME: Pass system instructions via `config.systemInstruction` once the Gemini Developer API supports it on countTokens (Vertex AI does; the Developer API rejects it at request build).
 				...system,
 				...this.promptContent
-					.map(seg => (seg.text !== undefined ? seg.text : seg.file.toString()))
+					// Media (images) has no text form and isn't uploaded yet at dry-run time,
+					// so it's excluded here — the count covers text/data input only.
+					.map(seg =>
+						seg.text !== undefined
+							? seg.text
+							: seg.file.isMedia
+								? ""
+								: seg.file.toString())
 					.filter(Boolean),
 			]),
 		});
