@@ -1,5 +1,5 @@
 import LLMTask from "@qualve/llm";
-import { createUserContent, createPartFromUri, GoogleGenAI } from "@google/genai";
+import { createUserContent, GoogleGenAI } from "@google/genai";
 import GeminiFile from "./file.js";
 
 export default class Gemini extends LLMTask {
@@ -70,10 +70,8 @@ export default class Gemini extends LLMTask {
 			// TODO: use explicit CachedContent for the stable prefix — guaranteed cache + longer TTL,
 			// and immune to remote-identity churn — instead of best-effort implicit prefix caching.
 			contents: createUserContent(
-				this.promptContent.map(seg =>
-					seg.text !== undefined
-						? seg.text
-						: createPartFromUri(seg.file.remoteFile.uri, seg.file.remoteFile.mimeType)),
+				this.promptContent.flatMap(seg =>
+					seg.text !== undefined ? [seg.text] : seg.file.toContentPart()),
 			),
 			config: {
 				systemInstruction: system?.join("\n"),

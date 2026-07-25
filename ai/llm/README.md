@@ -29,24 +29,25 @@ how it's handled:
 ```js
 export default {
 	type: "llm",
-	llm: "gemini", // image input is currently Gemini-only
+	llm: "claude", // or "openai", "gemini"
 	prompt: "Describe what's in this diagram.",
 	input: ["diagram.png", { name: "data", schema: mySchema }],
 	output: { name: "summary" },
 };
 ```
 
-- **Recognized image types** (`png`, `jpeg`, `gif`, `webp`, `heic`, `heif`) are
-  uploaded as-is under their real MIME type and sent to the model as native image
-  parts — never serialized to JSON.
+- **Recognized image types** (`png`, `jpeg`, `gif`, `webp`; plus `heic`/`heif` on
+  Gemini) are uploaded as-is under their real MIME type and sent to the model as
+  native image parts — never serialized to JSON.
 - **`svg`** is technically an image but is uploaded as **text** (its XML source),
   since models read markup well.
 - Any other binary type is rejected with a clear error rather than silently
   uploaded as a JSON byte dump.
 
-Image input is gated by the provider `imageInput` capability. Providers without it
-(currently Claude and OpenAI) **fail fast** at task setup with an actionable message
-rather than mis-sending the image. Images are excluded from `--dry-run` token counts.
+Image input is supported by the Claude, OpenAI, and Gemini providers. It's gated by
+the provider `imageInput` capability, so any provider without it **fails fast** at
+task setup with an actionable message rather than mis-sending the image. Images are
+excluded from `--dry-run` token counts.
 
 ### Writing a custom provider
 

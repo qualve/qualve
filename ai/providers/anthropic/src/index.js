@@ -10,6 +10,7 @@ export default class Claude extends LLMTask {
 	static capabilities = {
 		inputDescriptions: true,
 		outputSchema: true,
+		imageInput: true,
 	};
 
 	client = new Anthropic({
@@ -29,18 +30,29 @@ export default class Claude extends LLMTask {
 
 	async countTokens () {
 		let { system } = this;
-		let content = this.promptContent.map(seg =>
-			seg.text !== undefined
-				? { type: "text", text: seg.text }
-				: {
-						type: "document",
-						context: seg.file.describe(),
-						source: {
-							type: "text",
-							media_type: "text/plain",
-							data: seg.file.toString(),
-						},
-					});
+		let content = this.promptContent.flatMap(seg => {
+			if (seg.text !== undefined) {
+				return [{ type: "text", text: seg.text }];
+			}
+
+			// Images aren't uploaded at dry-run time and have no text form, so they're
+			// excluded here — the estimate covers text/data input only.
+			if (seg.file.isMedia) {
+				return [];
+			}
+
+			return [
+				{
+					type: "document",
+					context: seg.file.describe(),
+					source: {
+						type: "text",
+						media_type: "text/plain",
+						data: seg.file.toString(),
+					},
+				},
+			];
+		});
 
 		let result = await this.client.messages.countTokens({
 			model: this.model,
@@ -59,24 +71,22 @@ export default class Claude extends LLMTask {
 	 * boundary (prompt, reused across a call's batches) uses the 5-minute default.
 	 */
 	buildContent () {
-		return this.promptContent.map(seg => {
-			let block =
+		return this.promptContent.flatMap(seg => {
+			// A file segment can render as multiple blocks (an image carries a preceding
+			// label block); the cache breakpoint attaches to the segment's final block.
+			let blocks =
 				seg.text !== undefined
-					? { type: "text", text: seg.text }
-					: {
-							type: "document",
-							context: seg.file.describe(),
-							source: { type: "file", file_id: seg.file.remoteFile.id },
-						};
+					? [{ type: "text", text: seg.text }]
+					: seg.file.toContentPart();
 
 			if (seg.cache) {
-				block.cache_control =
+				blocks.at(-1).cache_control =
 					seg.cache === "shared"
 						? { type: "ephemeral", ttl: "1h" }
 						: { type: "ephemeral" };
 			}
 
-			return block;
+			return blocks;
 		});
 	}
 

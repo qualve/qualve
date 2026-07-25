@@ -36,18 +36,19 @@ export default {
 
 ## Models
 
-| Model | Context window | Max output |
-| --- | --- | --- |
-| `gpt-5.5` (default) | 1,050,000 | 128K |
-| `gpt-5.4-mini` | 400K | 128K |
-| `gpt-5.4-nano` | 400K | 128K |
+| Model               | Context window | Max output |
+| ------------------- | -------------- | ---------- |
+| `gpt-5.5` (default) | 1,050,000      | 128K       |
+| `gpt-5.4-mini`      | 400K           | 128K       |
+| `gpt-5.4-nano`      | 400K           | 128K       |
 
 ## Capabilities
 
-| Capability | Supported |
-| --- | --- |
-| Structured output (JSON schema) | Yes |
-| Thinking levels | Yes (`none`, `minimal`, `low`, `medium`\*, `high`, `xhigh`) |
-| Token counting | No |
+| Capability                      | Supported                                                   |
+| ------------------------------- | ----------------------------------------------------------- |
+| Structured output (JSON schema) | Yes                                                         |
+| Thinking levels                 | Yes (`none`, `minimal`, `low`, `medium`\*, `high`, `xhigh`) |
+| Token counting                  | No                                                          |
+| Image input                     | Yes (`png`, `jpeg`, `gif`, `webp`; `svg` as text)           |
 
 \* Default

@@ -273,7 +273,7 @@ export default class LLMTask extends Task {
 			if (media) {
 				throw new Error(
 					`${this.name} does not support image input (${media.filename}). ` +
-						`Image input is currently only available with the Gemini provider — run with \`--llm=gemini\`, ` +
+						`Use a provider with image support (claude, openai, gemini), ` +
 						`or remove the image from this task's inputs.`,
 				);
 			}

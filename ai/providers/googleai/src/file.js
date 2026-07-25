@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { createPartFromUri } from "@google/genai";
 import LLMFile from "@qualve/llm/file";
 
 export default class GeminiFile extends LLMFile {
@@ -74,5 +75,15 @@ export default class GeminiFile extends LLMFile {
 
 		// Not found
 		return null;
+	}
+
+	/**
+	 * Render this file as Gemini content parts. Gemini's part constructor is
+	 * MIME-generic, so images, text, and data all use the same shape — the uploaded
+	 * file's MIME type (image/* for media, text/plain for SVG) drives interpretation.
+	 * Returns an array so callers flatten uniformly across providers.
+	 */
+	toContentPart () {
+		return [createPartFromUri(this.remoteFile.uri, this.remoteFile.mimeType)];
 	}
 }
